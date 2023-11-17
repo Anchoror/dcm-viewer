@@ -1,7 +1,15 @@
-# Vue 3 + Vite
+# dcm-viewer
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 基于 vue + cornerstone.js 制作的一款 dcm 影像文件的在线预览与编辑工具
 
-## Recommended IDE Setup
+已完成：
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+1. 本地 dcm 文件加载与预览
+2. 影像预览的基础功能
+3. cornerstoneTool 的基础工具
+4. cornerstoneTool 的测量工具
+5. cornerstoneTool 的图层切换工具
+
+计划中：
+· 视图窗口的新增、激活、隐藏
+· 参考线、十字线工具的使用

@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "url";
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
-import path from 'path';
+import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -23,5 +23,8 @@ export default defineConfig({
     },
 
     extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
+  },
+  build: {
+    chunkSizeWarningLimit: 8500,
   },
 });

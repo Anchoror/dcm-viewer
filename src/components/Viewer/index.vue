@@ -1,6 +1,7 @@
 <template>
   <div class="viewer-container">
     <div
+      v-if="dcmList?.length"
       class="dcm-viewer"
       :class="{ actived: activedViewer == 1 }"
       @click.prevent="handleActive(1)">
@@ -13,6 +14,7 @@
         I : {{ currentIndex1 || 0 }} / {{ appStore.dcmList.length }}
       </div>
     </div>
+
     <!--    <div
       class="dcm-viewer"
       :class="{ actived: activedViewer == 2 }"
@@ -26,6 +28,10 @@
         I : {{ currentIndex2 || 0 }} / {{ appStore.dcmList.length }}
       </div>
     </div> -->
+
+    <div v-else class="input-file">
+      <input type="file" id="selectFile" @change="getFileData" multiple />
+    </div>
   </div>
 </template>
 
@@ -35,6 +41,7 @@ import { useAppStore } from "@/stores";
 import cornerstone from "cornerstone-core";
 import cornerstoneTools from "cornerstone-tools";
 const appStore = useAppStore();
+const dcmList = appStore.dcmList;
 
 const viewer1 = ref(null);
 const viewer1Port = ref(null);
@@ -58,7 +65,7 @@ const handleActive = (flag) => {
 };
 
 const initViewer = async () => {
-  appStore.mockList(); //测试本地数据
+  // appStore.mockList(); //测试本地数据
 
   //初始化操作
   appStore.initTools();
@@ -109,8 +116,14 @@ const initViewer = async () => {
     appStore.setActivedViewer(viewer1.value);
   });
 };
-onMounted(() => {
+
+const getFileData = async (e) => {
+  // console.log(e.target.files);
+  await appStore.setDcmList(e.target.files);
   initViewer();
+};
+onMounted(() => {
+  // initViewer();
 });
 </script>
 
@@ -141,6 +154,12 @@ onMounted(() => {
     width: 99%;
     height: 98%;
   }
+}
+.input-file {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .voi-data {
   position: absolute;

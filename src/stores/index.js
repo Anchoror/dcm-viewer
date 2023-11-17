@@ -348,6 +348,20 @@ export const useAppStore = defineStore("app", () => {
     }
   };
 
+  // 设置dcm影像列表
+  const setDcmList = (files) => {
+    Array.from(files).forEach((file) => {
+      const imageId =
+        cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+
+      dcmList.value.push({
+        id: imageId,
+        name: `${file.name}.dcm`,
+        actived: false,
+      });
+    });
+  };
+
   // 初始化Tools插件
   const initTools = () => {
     cornerstoneTools.init({
@@ -550,6 +564,7 @@ export const useAppStore = defineStore("app", () => {
   const setActivedViewer = (el) => {
     activedView.value = el;
   };
+
   return {
     dcmList,
     toolList,
@@ -563,6 +578,7 @@ export const useAppStore = defineStore("app", () => {
     activeTools,
     setSynchronizer,
     setActivedViewer,
+    setDcmList,
   };
 });
 

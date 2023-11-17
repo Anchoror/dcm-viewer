@@ -27,12 +27,12 @@ const viewerList = ref([
     ref: "view0",
   },
 ]);
-const handleAddViewer = () => {
-  viewerList.value.push({
-    id: viewerList.value.length,
-    ref: "view" + viewerList.value.length,
-  });
-};
+// const handleAddViewer = () => {
+//   viewerList.value.push({
+//     id: viewerList.value.length,
+//     ref: "view" + viewerList.value.length,
+//   });
+// };
 </script>
 
 <style lang="scss" scoped>

@@ -24,7 +24,19 @@ const formatNum = (num) => {
 };
 
 export const useAppStore = defineStore("app", () => {
+  const viewList = ref([
+    {
+      id: 0,
+      dcmList: [],
+      currentIndex: 0,
+      WC: 0,
+      WW: 0,
+    },
+  ]);
+  const activedView = ref({});
+
   const dcmList = ref([]);
+
   const toolList = ref([
     {
       type: "BaseView",
@@ -86,7 +98,8 @@ export const useAppStore = defineStore("app", () => {
           icon: "reset",
           actived: false,
           action: () => {
-            cornerstone.reset(viewContainer.value);
+            // console.log(activedView.value);
+            cornerstone.reset(activedView.value);
             setViewport();
           },
         },
@@ -314,23 +327,22 @@ export const useAppStore = defineStore("app", () => {
         },
       ],
     },
-    {
-      type: "Reference",
-      name: "参考线工具",
-      tools: [
-        {
-          name: "Crosshairs",
-          actived: false,
-          desc: "十字线",
-          icon: "加号",
-          configuration: {},
-          mouseButtonMask: 1,
-        },
-      ],
-    },
+    // {
+    //   type: "Reference",
+    //   name: "参考线工具",
+    //   tools: [
+    //     {
+    //       name: "Crosshairs",
+    //       actived: false,
+    //       desc: "十字线",
+    //       icon: "加号",
+    //       configuration: {},
+    //       mouseButtonMask: 1,
+    //     },
+    //   ],
+    // },
   ]);
   const activedTool = ref({});
-  const activedView = ref({});
 
   const synchronizer = ref({});
   // 启用测试服务器的数据
@@ -349,10 +361,10 @@ export const useAppStore = defineStore("app", () => {
   };
 
   // 设置dcm影像列表
-  const setDcmList = (files) => {
+  const setDcmList = (files, id) => {
+    // console.log(files);
     Array.from(files).forEach((file) => {
-      const imageId =
-        cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+      const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
 
       dcmList.value.push({
         id: imageId,
@@ -360,6 +372,8 @@ export const useAppStore = defineStore("app", () => {
         actived: false,
       });
     });
+    viewList.value[id].dcmList = dcmList.value;
+    console.log("dcmList", dcmList.value);
   };
 
   // 初始化Tools插件
@@ -459,7 +473,7 @@ export const useAppStore = defineStore("app", () => {
   // dcm图像的加载渲染
   const loadImage = async (element, imgId = dcmList.value[0]?.id) => {
     // error判断
-    if (!imgId) {
+    if (!imgId && imgId !== 0) {
       throw "imgId为空";
     }
     const selectDcm = dcmList.value.filter((dcm) => dcm.id === imgId);
@@ -481,6 +495,23 @@ export const useAppStore = defineStore("app", () => {
     cornerstone.enable(element);
     cornerstone.displayImage(element, image);
     setTools(element);
+
+    // 创建一个观察者实例
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        console.log(12);
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "style"
+        ) {
+          console.log("元素的宽度已变化，新的宽度为：" + element.offsetWidth);
+        }
+      });
+    });
+    // console.log(observer.observe);
+
+    // 开始观察指定的元素和属性变化
+    observer.observe(element, { attributes: true });
   };
   // 获取viewport
   const getViewport = (element) => {
@@ -524,6 +555,7 @@ export const useAppStore = defineStore("app", () => {
 
     if (type === "BaseView") {
       const viewport = getViewport(activedView.value);
+      // console.log("actived", activedView.value);
       action(viewport);
       cornerstone.setViewport(activedView.value, viewport);
     }
@@ -546,7 +578,7 @@ export const useAppStore = defineStore("app", () => {
     //   mouseButtonMask: 1,
     // });
 
-    console.log(cornerstone, activedView.value, name, cornerstoneTools);
+    // console.log(cornerstone, activedView.value, name, cornerstoneTools);
   };
 
   // 配置同步器
@@ -561,13 +593,40 @@ export const useAppStore = defineStore("app", () => {
   };
 
   // 设置激活的窗口
-  const setActivedViewer = (el) => {
+  const setActivedViewer = (el, id) => {
+    // console.log(el);
     activedView.value = el;
+    dcmList.value = viewList.value[id].dcmList;
+    // console.log(el);
+  };
+
+  const addViewer = (count) => {
+    viewList.value.push({
+      id: viewList.value.length,
+      dcmList: [],
+      currentIndex: 0,
+      WC: 0,
+      WW: 0,
+    });
+  };
+
+  // 设置窗口当前index值
+  const setCurrentIndex = (index, id) => {
+    viewList.value[id].currentIndex = index;
+  };
+
+  // 设置窗口当前WC、WW值
+  const setWC = (value, id) => {
+    viewList.value[id].WC = value;
+  };
+  const setWW = (value, id) => {
+    viewList.value[id].WW = value;
   };
 
   return {
     dcmList,
     toolList,
+    viewList,
     mockList,
     // viewport,
     loadImage,
@@ -579,6 +638,10 @@ export const useAppStore = defineStore("app", () => {
     setSynchronizer,
     setActivedViewer,
     setDcmList,
+    setCurrentIndex,
+    setWC,
+    setWW,
+    addViewer,
   };
 });
 

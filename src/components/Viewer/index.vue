@@ -1,126 +1,102 @@
 <template>
   <div class="viewer-container">
     <div
-      v-if="dcmList?.length"
+      v-for="item in appStore.viewList"
+      :key="item.id"
       class="dcm-viewer"
-      :class="{ actived: activedViewer == 1 }"
-      @click.prevent="handleActive(1)">
-      <div class="viewer-img" ref="viewer1"></div>
-      <div class="voi-data">
-        W : {{ viewer1Port?.voi?.windowWidth }}, L :
-        {{ viewer1Port?.voi?.windowCenter }}
+      :class="{ actived: activedViewer == item.id }"
+      @click="handleActive(item.id)">
+      <div class="viewer-img" ref="viewer"></div>
+      <div v-if="!item.dcmList?.length" class="input-file">
+        <input
+          type="file"
+          id="selectFile"
+          @change="getFileData($event, item.id)"
+          multiple />
       </div>
-      <div class="stack-data" @click="handleClick">
-        I : {{ currentIndex1 || 0 }} / {{ appStore.dcmList.length }}
+      <div class="voi-data" v-if="item.dcmList?.length">
+        W : {{ item.WW }}, L :
+        {{ item.WC }}
       </div>
-    </div>
-
-    <!--    <div
-      class="dcm-viewer"
-      :class="{ actived: activedViewer == 2 }"
-      @click.prevent="handleActive(2)">
-      <div class="viewer-img" ref="viewer2"></div>
-      <div class="voi-data">
-        W : {{ viewer2Port?.voi?.windowWidth }}, L :
-        {{ viewer2Port?.voi?.windowCenter }}
+      <div class="stack-data" v-if="item.dcmList?.length" @click="handleClick">
+        I : {{ item.currentIndex || 0 }} / {{ item.dcmList.length }}
       </div>
-      <div class="stack-data" @click="handleClick">
-        I : {{ currentIndex2 || 0 }} / {{ appStore.dcmList.length }}
-      </div>
-    </div> -->
-
-    <div v-else class="input-file">
-      <input type="file" id="selectFile" @change="getFileData" multiple />
     </div>
   </div>
 </template>
 
 <script setup>
-import { nextTick, ref, onMounted } from "vue";
+import { nextTick, ref, onMounted, getCurrentInstance } from "vue";
 import { useAppStore } from "@/stores";
 import cornerstone from "cornerstone-core";
 import cornerstoneTools from "cornerstone-tools";
 const appStore = useAppStore();
-const dcmList = appStore.dcmList;
+const { proxy } = getCurrentInstance();
+// const dcmList = appStore.dcmList;
 
-const viewer1 = ref(null);
-const viewer1Port = ref(null);
-const currentIndex1 = ref(0);
-
-const viewer2 = ref(null);
-const viewer2Port = ref(null);
-const currentIndex2 = ref(0);
+// const viewer1 = ref(null);
+const viewerPort = ref(null);
+// const currentIndex1 = ref(0);
 
 const activedViewer = ref(null); //当前激活的窗口
 // const voi = ref(null); //窗宽和窗位
 
-const handleActive = (flag) => {
-  // console.log(item);
-  activedViewer.value = flag;
-  if (flag == 1) {
-    appStore.setActivedViewer(viewer1.value);
-  } else if (flag == 2) {
-    appStore.setActivedViewer(viewer2.value);
-  }
+const handleActive = (id) => {
+  // console.log("handleactive");
+  activedViewer.value = id;
+
+  // console.log(proxy.$refs);
+  appStore.setActivedViewer(
+    proxy.$refs.viewer ? proxy.$refs.viewer[id] : null,
+    id
+  );
 };
 
-const initViewer = async () => {
+const initViewer = async (id) => {
   // appStore.mockList(); //测试本地数据
 
   //初始化操作
   appStore.initTools();
+  // console.log(proxy.$refs.viewer[id]);
 
   // 窗口1
-  await appStore.loadImage(viewer1.value);
-  viewer1Port.value = appStore.getViewport(viewer1.value);
+  await appStore.loadImage(proxy.$refs.viewer[id]);
+  viewerPort.value = appStore.getViewport(proxy.$refs.viewer[id]);
   // console.log(appStore.stack.currentImageIdIndex);
 
-  viewer1.value.addEventListener(
+  proxy.$refs.viewer[id].addEventListener(
     cornerstoneTools.EVENTS.STACK_SCROLL,
     (event) => {
-      currentIndex1.value = cornerstoneTools.getToolState(
-        viewer1.value,
+      const currentIndex = cornerstoneTools.getToolState(
+        proxy.$refs.viewer[id],
         "stack"
       ).data[0].currentImageIdIndex;
+      // console.log(currentIndex);
+      appStore.setCurrentIndex(currentIndex, id);
     }
   );
-  viewer1.value.addEventListener(cornerstone.EVENTS.IMAGE_RENDERED, (event) => {
-    // 获取窗口宽度和窗口中心
-    viewer1Port.value = cornerstone.getViewport(viewer1.value);
-  });
-
-  // 窗口2
-  // await appStore.loadImage(viewer2.value);
-  // viewer2Port.value = appStore.getViewport(viewer2.value);
-  // // console.log(appStore.stack.currentImageIdIndex);
-
-  // viewer2.value.addEventListener(
-  //   cornerstoneTools.EVENTS.STACK_SCROLL,
-  //   (event) => {
-  //     currentIndex2.value = cornerstoneTools.getToolState(
-  //       viewer2.value,
-  //       "stack"
-  //     ).data[0].currentImageIdIndex;
-  //   }
-  // );
-  // viewer2.value.addEventListener(cornerstone.EVENTS.IMAGE_RENDERED, (event) => {
-  //   // 获取窗口宽度和窗口中心
-  //   viewer2Port.value = cornerstone.getViewport(viewer2.value);
-  // });
-
-  // 启用同步器
-  // appStore.setSynchronizer(viewer1.value, viewer2.value);
+  proxy.$refs.viewer[id].addEventListener(
+    cornerstone.EVENTS.IMAGE_RENDERED,
+    (event) => {
+      // 获取窗口宽度和窗口中心
+      const viewerPort = cornerstone.getViewport(proxy.$refs.viewer[id]);
+      appStore.setWC(viewerPort?.voi?.windowCenter, id);
+      appStore.setWW(viewerPort?.voi?.windowWidth, id);
+      // appStore.setViewport(viewerPort, id);
+    }
+  );
 
   nextTick(() => {
-    activedViewer.value = 1;
-    appStore.setActivedViewer(viewer1.value);
+    activedViewer.value = id;
+    appStore.setActivedViewer(proxy.$refs.viewer[id], id);
   });
 };
 
-const getFileData = async (e) => {
-  // console.log(e.target.files);
-  await appStore.setDcmList(e.target.files);
-  initViewer();
+const getFileData = async (e, id) => {
+  console.log(e.target.files);
+  // console.log(proxy.$refs.viewer);
+  await appStore.setDcmList(e.target.files, id);
+  initViewer(id);
 };
 onMounted(() => {
   // initViewer();
@@ -157,6 +133,7 @@ onMounted(() => {
 }
 .input-file {
   width: 100%;
+  position: absolute;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -95,11 +95,41 @@ const initViewer = async (id) => {
 const getFileData = async (e, id) => {
   console.log(e.target.files);
   // console.log(proxy.$refs.viewer);
+  if (
+    e.target.files.length &&
+    Array.from(e.target.files).some((item) => item.name.indexOf(".dcm") == -1)
+  ) {
+    alert("请上传 dcm 文件");
+    return;
+  }
   await appStore.setDcmList(e.target.files, id);
   initViewer(id);
 };
-onMounted(() => {
+onMounted(async () => {
   // initViewer();
+
+  // 使用 import.meta.glob 获取本地 assets/dcmImg/* 文件
+  const files = import.meta.glob("@/assets/dcmImg/*.dcm", { as: "url" });
+
+  // 获取文件 URL 列表
+  const fileList = [];
+  await Promise.all(
+    Object.values(files).map(async (file) => {
+      const url = await file();
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      fileList.push(
+        new File([blob], url.split("/").pop(), {
+          type: "application/dicom",
+        })
+      );
+    })
+  ).then(async (res) => {
+    // 调用 getFileData 方法处理文件
+    alert("加载测试数据。。。");
+    getFileData({ target: { files: fileList } }, 0);
+  });
 });
 </script>
 
